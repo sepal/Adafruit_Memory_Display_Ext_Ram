@@ -45,18 +45,18 @@ byte sharpmem_buffer[(SHARPMEM_LCDWIDTH * SHARPMEM_LCDHEIGHT) / 8];
 /* ************* */
 /* CONSTRUCTORS  */
 /* ************* */
-Adafruit_SharpMem::Adafruit_SharpMem(uint8_t clk, uint8_t mosi, uint8_t ss) :
+Adafruit_SharpMem::Adafruit_SharpMem(uint8_t clk, uint8_t mosi, uint8_t cs) :
 Adafruit_GFX(SHARPMEM_LCDWIDTH, SHARPMEM_LCDHEIGHT) {
   _clk = clk;
   _mosi = mosi;
-  _ss = ss;
+  _cs = cs;
 
   // Set pin state before direction to make sure they start this way (no glitching)
-  digitalWrite(_ss, HIGH);  
+  digitalWrite(_cs, HIGH);  
   digitalWrite(_clk, LOW);  
   digitalWrite(_mosi, HIGH);  
   
-  pinMode(_ss, OUTPUT);
+  pinMode(_cs, OUTPUT);
   pinMode(_clk, OUTPUT);
   pinMode(_mosi, OUTPUT);
   
@@ -188,11 +188,11 @@ void Adafruit_SharpMem::clearDisplay()
 {
   memset(sharpmem_buffer, 0xff, (SHARPMEM_LCDWIDTH * SHARPMEM_LCDHEIGHT) / 8);
   // Send the clear screen command rather than doing a HW refresh (quicker)
-  digitalWrite(_ss, HIGH);
+  digitalWrite(_cs, HIGH);
   sendbyte(_sharpmem_vcom | SHARPMEM_BIT_CLEAR);
   sendbyteLSB(0x00);
   TOGGLE_VCOM;
-  digitalWrite(_ss, LOW);
+  digitalWrite(_cs, LOW);
 }
 
 /**************************************************************************/
@@ -206,7 +206,7 @@ void Adafruit_SharpMem::refresh(void)
   totalbytes = (SHARPMEM_LCDWIDTH * SHARPMEM_LCDHEIGHT) / 8;
 
   // Send the write command
-  digitalWrite(_ss, HIGH);
+  digitalWrite(_cs, HIGH);
   sendbyte(SHARPMEM_BIT_WRITECMD | _sharpmem_vcom);
   TOGGLE_VCOM;
 
@@ -233,5 +233,5 @@ void Adafruit_SharpMem::refresh(void)
 
   // Send another trailing 8 bits for the last line
   sendbyteLSB(0x00);
-  digitalWrite(_ss, LOW);
+  digitalWrite(_cs, LOW);
 }

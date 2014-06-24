@@ -31,7 +31,7 @@ All text above, and the splash screen must be included in any redistribution
 
 class Adafruit_SharpMem : public Adafruit_GFX {
  public:
-  Adafruit_SharpMem(uint8_t clk, uint8_t mosi, uint8_t ss);
+  Adafruit_SharpMem(uint8_t clk, uint8_t mosi, uint8_t cs);
   void begin(void);
   void drawPixel(int16_t x, int16_t y, uint16_t color);
   uint8_t getPixel(uint16_t x, uint16_t y);
@@ -39,7 +39,7 @@ class Adafruit_SharpMem : public Adafruit_GFX {
   void refresh(void);
 
  private:
-  uint8_t _ss, _clk, _mosi;
+  uint8_t _cs, _clk, _mosi;
   volatile uint8_t *dataport, *clkport;
   uint8_t _sharpmem_vcom, datapinmask, clkpinmask;
   

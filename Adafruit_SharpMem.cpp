@@ -40,16 +40,17 @@ All text above, and the splash screen must be included in any redistribution
 #define SHARPMEM_BIT_CLEAR      (0x20)
 #define TOGGLE_VCOM             do { _sharpmem_vcom = _sharpmem_vcom ? 0x00 : SHARPMEM_BIT_VCOM; } while(0);
 
-byte sharpmem_buffer[(SHARPMEM_LCDWIDTH * SHARPMEM_LCDHEIGHT) / 8];
+// Size used by the display.
+const uint8_t mem_size = (SHARPMEM_LCDWIDTH * SHARPMEM_LCDHEIGHT) / 8;
 
 /* ************* */
 /* CONSTRUCTORS  */
 /* ************* */
-Adafruit_SharpMem::Adafruit_SharpMem(uint8_t clk, uint8_t mosi, uint8_t cs) :
-Adafruit_GFX(SHARPMEM_LCDWIDTH, SHARPMEM_LCDHEIGHT) {
-  _clk = clk;
-  _mosi = mosi;
-  _cs = cs;
+Adafruit_SharpMem::Adafruit_SharpMem(uint8_t ram_cs, uint8_t lcd_clk, uint8_t lcd_mosi, uint8_t lcd_cs) :
+Adafruit_GFX(SHARPMEM_LCDWIDTH, SHARPMEM_LCDHEIGHT) : sRam(ram_cs) {
+  _clk = lcd_clk;
+  _mosi = lcd_mosi;
+  _cs = lcd_cs;
 
   // Set pin state before direction to make sure they start this way (no glitching)
   digitalWrite(_cs, HIGH);  

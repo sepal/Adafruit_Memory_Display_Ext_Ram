@@ -161,8 +161,8 @@ void Adafruit_SharpMem::drawPixel(int16_t x, int16_t y, uint16_t color)
   if ((x >= SHARPMEM_LCDWIDTH) || (y >= SHARPMEM_LCDHEIGHT))
     return;
 
-  uint8_t address = (y * SHARPMEM_LCDWIDTH + x) /8;
-  uint8_t byte = sRam.readByte(address);
+  int16_t address = (y*SHARPMEM_LCDWIDTH + x) /8;
+  byte  byte = sRam.readByte(address);
   if (color) {
     sRam.writeByte(address, byte | (1 << x % 8));
   } else {
@@ -186,7 +186,7 @@ uint8_t Adafruit_SharpMem::getPixel(uint16_t x, uint16_t y)
 {
   if ((x >=SHARPMEM_LCDWIDTH) || (y >=SHARPMEM_LCDHEIGHT)) return 0;
   
-  uint8_t address = (y * SHARPMEM_LCDWIDTH + x) /8;
+  int16_t address = (y*SHARPMEM_LCDWIDTH + x) /8;
   uint8_t byte = sRam.readByte(address);
   return byte & (1 << x % 8) ? 1 : 0;
 }

@@ -38,12 +38,12 @@ class Adafruit_SharpMem : public Adafruit_GFX {
   uint8_t getPixel(uint16_t x, uint16_t y);
   void clearDisplay();
   void refresh(void);
+  SpiRAM sRam;
 
  private:
   uint8_t _cs, _clk, _mosi;
   volatile uint8_t *dataport, *clkport;
   uint8_t _sharpmem_vcom, datapinmask, clkpinmask;
-  SpiRam sRam;
   
   void sendbyte(uint8_t data);
   void sendbyteLSB(uint8_t data);

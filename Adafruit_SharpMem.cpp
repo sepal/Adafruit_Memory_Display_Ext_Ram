@@ -41,21 +41,26 @@ All text above, and the splash screen must be included in any redistribution
 #define TOGGLE_VCOM             do { _sharpmem_vcom = _sharpmem_vcom ? 0x00 : SHARPMEM_BIT_VCOM; } while(0);
 
 // Size used by the display.
-const uint8_t mem_size = (SHARPMEM_LCDWIDTH * SHARPMEM_LCDHEIGHT) / 8;
+const uint16_t lcd_mem_size = SHARPMEM_LCDWIDTH * SHARPMEM_LCDHEIGHT / 8;
+const uint16_t lcd_row_size = SHARPMEM_LCDWIDTH / 8;
 
 /* ************* */
 /* CONSTRUCTORS  */
 /* ************* */
 Adafruit_SharpMem::Adafruit_SharpMem(uint8_t ram_cs, uint8_t lcd_clk, uint8_t lcd_mosi, uint8_t lcd_cs) :
-Adafruit_GFX(SHARPMEM_LCDWIDTH, SHARPMEM_LCDHEIGHT) : sRam(ram_cs) {
+Adafruit_GFX(SHARPMEM_LCDWIDTH, SHARPMEM_LCDHEIGHT), sRam(ram_cs) {
   _clk = lcd_clk;
   _mosi = lcd_mosi;
   _cs = lcd_cs;
 
   // Set pin state before direction to make sure they start this way (no glitching)
-  digitalWrite(_cs, HIGH);  
-  digitalWrite(_clk, LOW);  
-  digitalWrite(_mosi, HIGH);  
+  digitalWrite(_cs, HIGH);
+  digitalWrite(_clk, LOW);
+  digitalWrite(_mosi, HIGH);
+  
+  // Make sure the LCD stays off
+  pinMode(13, OUTPUT);
+  digitalWrite(13, LOW);
   
   pinMode(_cs, OUTPUT);
   pinMode(_clk, OUTPUT);
@@ -156,10 +161,13 @@ void Adafruit_SharpMem::drawPixel(int16_t x, int16_t y, uint16_t color)
   if ((x >= SHARPMEM_LCDWIDTH) || (y >= SHARPMEM_LCDHEIGHT))
     return;
 
-  if (color)
-    sharpmem_buffer[(y*SHARPMEM_LCDWIDTH + x) /8] |= (1 << x % 8);
-  else
-    sharpmem_buffer[(y*SHARPMEM_LCDWIDTH + x) /8] &= ~(1 << x % 8);
+  uint8_t address = (y * SHARPMEM_LCDWIDTH + x) /8;
+  uint8_t byte = sRam.readByte(address);
+  if (color) {
+    sRam.writeByte(address, byte | (1 << x % 8));
+  } else {
+    sRam.writeByte(address, byte & ~(1 << x % 8));
+  }
 }
 
 /**************************************************************************/
@@ -177,7 +185,10 @@ void Adafruit_SharpMem::drawPixel(int16_t x, int16_t y, uint16_t color)
 uint8_t Adafruit_SharpMem::getPixel(uint16_t x, uint16_t y)
 {
   if ((x >=SHARPMEM_LCDWIDTH) || (y >=SHARPMEM_LCDHEIGHT)) return 0;
-  return sharpmem_buffer[(y*SHARPMEM_LCDWIDTH + x) /8] & (1 << x % 8) ? 1 : 0;
+  
+  uint8_t address = (y * SHARPMEM_LCDWIDTH + x) /8;
+  uint8_t byte = sRam.readByte(address);
+  return byte & (1 << x % 8) ? 1 : 0;
 }
 
 /**************************************************************************/
@@ -187,7 +198,7 @@ uint8_t Adafruit_SharpMem::getPixel(uint16_t x, uint16_t y)
 /**************************************************************************/
 void Adafruit_SharpMem::clearDisplay() 
 {
-  memset(sharpmem_buffer, 0xff, (SHARPMEM_LCDWIDTH * SHARPMEM_LCDHEIGHT) / 8);
+  sRam.fillBytes(0, 0xFF, lcd_mem_size);
   // Send the clear screen command rather than doing a HW refresh (quicker)
   digitalWrite(_cs, HIGH);
   sendbyte(_sharpmem_vcom | SHARPMEM_BIT_CLEAR);
@@ -218,7 +229,8 @@ void Adafruit_SharpMem::refresh(void)
   // Send image buffer
   for (i=0; i<totalbytes; i++)
   {
-    sendbyteLSB(sharpmem_buffer[i]);
+    uint8_t byte = sRam.readByte(i);
+    sendbyteLSB(byte);
     currentline = ((i+1)/(SHARPMEM_LCDWIDTH/8)) + 1;
     if(currentline != oldline)
     {
